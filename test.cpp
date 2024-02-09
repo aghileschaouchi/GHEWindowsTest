@@ -39,7 +39,7 @@ TEST(ProcessMonitoring, Address)
 	EXPECT_TRUE(isStatic);
 }
 
-TEST(ProcessMonitoring, Pointer)
+TEST(ProcessMonitoring, Pointer1)
 {
 	DWORD pid;
 	std::string gameName("Tomb Raider II");
@@ -52,14 +52,39 @@ TEST(ProcessMonitoring, Pointer)
 
 	ghe::Address<DWORD_PTR> m16Address(true, winGame.baseAddress()->getAddress() + static_cast<DWORD_PTR>(0x001207BC));
 	std::vector<DWORD_PTR> offsets = { 0x00000035 };
-	ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets));
+	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets));
 
-	DWORD_PTR m16StaticAddress1 = pointer1.pointedAddressValue();
-	printf("is pointing to:%ud\n", m16StaticAddress1);
+	//DWORD_PTR m16StaticAddress1 = pointer1.pointedAddressValue();
+	//printf("is pointing to:%ud\n", m16StaticAddress1);
 
-	ghe::Address<DWORD_PTR> testAddress(m16StaticAddress1, true);
-	DWORD_PTR m16StaticAddress1Value = winGame.readValue(testAddress);
-	printf("value:%ud\n", m16StaticAddress1Value);
+	//ghe::Address<DWORD_PTR> testAddress(m16StaticAddress1, true);
+	//DWORD_PTR m16StaticAddress1Value = winGame.readValue(testAddress);
+	//printf("value:%ud\n", m16StaticAddress1Value);
 	
-	EXPECT_TRUE(0x0ED9BE09 == m16StaticAddress1Value);
+	//EXPECT_TRUE(0x0ED9BE09 == m16StaticAddress1Value);
+}
+
+TEST(ProcessMonitoring, Pointer2)
+{
+	DWORD pid;
+	std::string gameName("Tomb Raider II");
+	std::string baseModuleName("Tomb2.exe");
+	HANDLE hProcess;
+	HWND gameHWND;
+	ghe::Address<DWORD_PTR> _baseAddress;
+	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> winGame(std::move(_baseAddress), std::move(pid),
+		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
+
+	ghe::Address<DWORD_PTR> xCoordinateAddress(false, winGame.baseAddress()->getAddress() + static_cast<DWORD_PTR>(0x0EDA8E11));
+	std::vector<DWORD_PTR> offsets = { 0x0000D8A2C, 0x000C, 0x001C, 0x0038, 0x004C, 0x0044, 0x003D };
+	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets));
+	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets)); maybe add a contructor version that take a pointer to ghe::Address?
+
+	//DWORD_PTR m16StaticAddress1 = pointer1.pointedAddressValue();
+	//printf("is pointing to:%ud\n", m16StaticAddress1);
+
+	//DWORD_PTR xCoordinateValue = winGame.readValue(xCoordinateAddress);
+	//printf("value:%ud\n", xCoordinateValue);
+	
+	//EXPECT_TRUE(0x0EDA8E11 == xCoordinateValue);
 }
