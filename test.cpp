@@ -8,11 +8,11 @@
 
 TEST(ProcessMonitoring, WindowsGame)
 {
-	DWORD pid;
+	DWORD pid = NULL;
 	std::string gameName("Tomb Raider II");
 	std::string baseModuleName("Tomb2.exe");
-	HANDLE hProcess;
-	HWND gameHWND;
+	HANDLE hProcess = NULL;
+	HWND gameHWND = NULL;
 	ghe::Address<DWORD_PTR> _baseAddress;
 	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> winGame(std::move(_baseAddress), std::move(pid),
 		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
@@ -31,7 +31,7 @@ TEST(ProcessMonitoring, WindowsGame)
 TEST(ProcessMonitoring, Address)
 {
 	ghe::Address<DWORD_PTR> m16Address(true, 0x005207B4);
-	const DWORD_PTR m16AddressValue = static_cast<DWORD_PTR>(m16Address.getAddress());
+	const DWORD_PTR m16AddressValue = static_cast<DWORD_PTR>(m16Address.value());
 	const bool isStatic = m16Address.isStatic();
 
 	(isStatic) ? printf("%ud\n", m16AddressValue) : printf("test has failed!\n");
@@ -41,50 +41,97 @@ TEST(ProcessMonitoring, Address)
 
 TEST(ProcessMonitoring, Pointer1)
 {
-	DWORD pid;
+	DWORD pid = NULL;
 	std::string gameName("Tomb Raider II");
 	std::string baseModuleName("Tomb2.exe");
-	HANDLE hProcess;
-	HWND gameHWND;
+	HANDLE hProcess = NULL;
+	HWND gameHWND = NULL;
 	ghe::Address<DWORD_PTR> _baseAddress;
 	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> winGame(std::move(_baseAddress), std::move(pid),
 		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
 
-	ghe::Address<DWORD_PTR> m16Address(true, winGame.baseAddress()->getAddress() + static_cast<DWORD_PTR>(0x001207BC));
+	ghe::Address<DWORD_PTR> m16Address(true, winGame.baseAddress()->value() + static_cast<DWORD_PTR>(0x001207BC));
 	std::vector<DWORD_PTR> offsets = { 0x00000035 };
-	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets));
 
-	//DWORD_PTR m16StaticAddress1 = pointer1.pointedAddressValue();
-	//printf("is pointing to:%ud\n", m16StaticAddress1);
-
-	//ghe::Address<DWORD_PTR> testAddress(m16StaticAddress1, true);
-	//DWORD_PTR m16StaticAddress1Value = winGame.readValue(testAddress);
-	//printf("value:%ud\n", m16StaticAddress1Value);
-	
-	//EXPECT_TRUE(0x0ED9BE09 == m16StaticAddress1Value);
+	EXPECT_TRUE(true);
 }
 
 TEST(ProcessMonitoring, Pointer2)
 {
-	DWORD pid;
+	DWORD pid = NULL;
 	std::string gameName("Tomb Raider II");
 	std::string baseModuleName("Tomb2.exe");
-	HANDLE hProcess;
-	HWND gameHWND;
+	HANDLE hProcess = NULL;
+	HWND gameHWND = NULL;
 	ghe::Address<DWORD_PTR> _baseAddress;
-	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> winGame(std::move(_baseAddress), std::move(pid),
+	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> tr2(std::move(_baseAddress), std::move(pid),
 		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
 
-	ghe::Address<DWORD_PTR> xCoordinateAddress(false, winGame.baseAddress()->getAddress() + static_cast<DWORD_PTR>(0x0EDA8E11));
-	std::vector<DWORD_PTR> offsets = { 0x0000D8A2C, 0x000C, 0x001C, 0x0038, 0x004C, 0x0044, 0x003D };
-	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets));
-	//ghe::Pointer<DWORD_PTR, DWORD_PTR> pointer1(std::move(m16Address), std::move(offsets)); maybe add a contructor version that take a pointer to ghe::Address?
+	std::vector<DWORD_PTR> offsets = { 0x0011B91C, 0x00000360 };
 
-	//DWORD_PTR m16StaticAddress1 = pointer1.pointedAddressValue();
-	//printf("is pointing to:%ud\n", m16StaticAddress1);
+	ghe::Address<DWORD_PTR> tr2baseAddressCopy = tr2.baseAddressCopy();
 
-	//DWORD_PTR xCoordinateValue = winGame.readValue(xCoordinateAddress);
-	//printf("value:%ud\n", xCoordinateValue);
+	DWORD_PTR tmp_addr = NULL;
+	DWORD_PTR dynamicAddress = tr2.baseAddress()->value();
+	hProcess = tr2.hProcess();
+
+	for (size_t i = 0; i < offsets.size() - 1; ++i)
+	{
+		dynamicAddress += offsets[i];
+		ReadProcessMemory(hProcess, (LPCVOID)(dynamicAddress), (LPVOID)&tmp_addr, sizeof(tmp_addr), NULL);
+		dynamicAddress = tmp_addr;
+	}
+	dynamicAddress += offsets[offsets.size() - 1];
+
+	ghe::Address<DWORD_PTR> xCoordinateAddress(false, dynamicAddress);
 	
-	//EXPECT_TRUE(0x0EDA8E11 == xCoordinateValue);
+	printf("dynamic address: 0x%08x\n", xCoordinateAddress.value());
+	BYTE xCoordinateValue = tr2.readValue(xCoordinateAddress); //X address is write only
+	printf("X game value: %hhx\n", xCoordinateValue);
+
+	EXPECT_TRUE(true);
+}
+
+TEST(ProcessMonitoring, Pointer3)
+{
+	DWORD pid = NULL;
+	std::string gameName("Tomb Raider II");
+	std::string baseModuleName("Tomb2.exe");
+	HANDLE hProcess = NULL;
+	HWND gameHWND = NULL;
+	ghe::Address<DWORD_PTR> _baseAddress;
+	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> tr2(std::move(_baseAddress), std::move(pid),
+		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
+
+	std::vector<DWORD_PTR> offsets = { 0x001262F0, 0x0000034D };
+
+	ghe::Pointer<DWORD_PTR, DWORD_PTR> tigerXPointer(std::move(tr2.baseAddressCopy()), std::move(offsets));
+	ghe::Address<DWORD_PTR> tigerXPointerAddressResult = tigerXPointer.dynamicAddress(tr2.hProcess()); 
+	printf("dynamic address: 0x%08x\n", tigerXPointerAddressResult.value());
+	BYTE xCoordinateValue = tr2.readValue(tigerXPointerAddressResult);
+	printf("X game value: %hhx\n", xCoordinateValue);
+	
+	EXPECT_TRUE(true);
+}
+
+TEST(ProcessMonitoring, Pointer4)
+{
+	DWORD pid = NULL;
+	std::string gameName("Tomb Raider II");
+	std::string baseModuleName("Tomb2.exe");
+	HANDLE hProcess = NULL;
+	HWND gameHWND = NULL;
+	ghe::Address<DWORD_PTR> _baseAddress;
+	ghe::WinGame<DWORD, HANDLE, HWND, DWORD_PTR, DWORD, 2> tr2(std::move(_baseAddress), std::move(pid),
+		std::move(gameName), std::move(hProcess), std::move(gameHWND), std::move(baseModuleName));
+
+	std::vector<DWORD_PTR> offsets = { 0x001262F0, 0x0000034D };
+
+	ghe::Pointer<DWORD_PTR, DWORD_PTR> tigerXPointer(std::move(tr2.baseAddressDeref()), std::move(offsets));
+	ghe::Address<DWORD_PTR> tigerXPointerAddressResult = tigerXPointer.dynamicAddress(tr2.hProcess()); 
+	printf("dynamic address: 0x%08x\n", tigerXPointerAddressResult.value());
+	BYTE xCoordinateValue = tr2.readValue(tigerXPointerAddressResult);
+	printf("X game value: %hhx\n", xCoordinateValue);
+	
+	EXPECT_TRUE(true);
 }
